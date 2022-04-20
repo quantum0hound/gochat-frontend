@@ -1,33 +1,40 @@
 <template>
-  <div class="row q-pt-md bg-grey-10 text-white main-dark" >
+  <div class="row q-pt-md" >
 
     <div class="col"></div>
     <div class="col-3">
-      <q-form @submit="onSubmit" >
-        <q-input
-          dark
-          filled
-          v-model="username"
-          label="Username"
-          lazy-rules
-          :rules="[ val => val && val.length > 0 || 'Please type something']"
-        />
+      <q-card>
+        <q-card-section>
+          <div class="text-h6">Sign in</div>
+        </q-card-section>
+        <q-card-section>
+          <q-input
+            ref="usernameRef"
+            label="Username"
+            dense
+            v-model="username"
+            lazy-rules
+            :rules="usernameRules"
+          />
+        </q-card-section>
+        <q-card-section>
+          <q-input
+            ref="passwordRef"
+            type="password"
+            dense
+            v-model="password"
+            lazy-rules
+            :rules="passwordRules"
+            label="Password"
+          />
+        </q-card-section>
+        <q-card-actions>
+          <q-btn label="Sign in"  color="primary" @click="signIn"/>
+        </q-card-actions>
 
-        <q-input
-          dark
-          type="password"
-          filled
-          v-model="password"
-          label="Password"
-          :rules="[ val => val && val.length > 0 || 'Please type something']"
-        />
-        <div>
-          <q-btn label="SIGN IN" type="submit" color="primary"/>
-        </div>
-        <div class="q-pt-md">Not registered? <a href="/signup">Register...</a></div>
-      </q-form>
+      </q-card>
 
-
+      <div class="q-pt-md">Not registered? <a href="/signup">Register...</a></div>
     </div>
     <div class="col"></div>
   </div>
@@ -35,40 +42,56 @@
 </template>
 
 <script>
+import {useQuasar} from "quasar";
+import {useRouter} from "vue-router";
 import {ref} from "vue";
 import AuthService from "src/services/auth"
 import {ShowDialog} from "src/utils/utils";
-import FingerprintJS from '@fingerprintjs/fingerprintjs'
 
 
 export default {
   name: "SignIn",
 
   setup(){
-    return {
-      username : ref(""),
-      password : ref(""),
-    };
-  },
-  methods:{
-    onSubmit(){
-      this.$q.loading.show({message: `Signing in...`});
-      let username = this.username;
-      console.log(this.$store.state.auth.loggedIn)
+    const $q = useQuasar();
+    const $r = useRouter();
+    const username = ref(null);
+    const usernameRef = ref(null);
 
-      AuthService.signIn(this.username,this.password).then(
+    const password = ref(null);
+    const passwordRef = ref(null);
+
+    return {
+      username,
+      usernameRef,
+      usernameRules: AuthService.nameFormatRules(5),
+
+      password,
+      passwordRef,
+      passwordRules:AuthService.nameFormatRules(5),
+
+      async signIn(){
+        usernameRef.value.validate();
+        passwordRef.value.validate();
+        if (usernameRef.value.hasError || passwordRef.value.hasError) {
+          alert("validation failure");
+          return;
+        }
+
+        $q.loading.show({message: `Signing in...`});
+
+        AuthService.signIn(username.value,password.value).then(
           response =>{
             console.log(response);
             let accessToken = response.data.accessToken;
 
             localStorage.setItem("accessToken",accessToken);
-            localStorage.setItem("username",username);
+            localStorage.setItem("username",username.value);
             localStorage.setItem("loggedIn","true");
 
             AuthService.applyTokenToHeaders();
 
-            this.$store.commit("auth/signInSuccess",{username,accessToken});
-            this.$router.push("/");
+            $r.push("/");
           },
 
           error =>{
@@ -76,21 +99,22 @@ export default {
             localStorage.setItem("username","");
             localStorage.setItem("loggedIn","false");
 
-            let errorMessage = "";
-            if(error.response.data.message){
+            let errorMessage;
+            if(error.response && error.response.data && error.response.data.message){
               errorMessage = error.response.data.message;
             }
             else {
               errorMessage = error;
             }
-            ShowDialog(this.$q,"Error", `Failed to sign in : ${errorMessage}`);
+            ShowDialog($q,"Error", `Failed to sign in : ${errorMessage}`);
           }
-      )
-      .finally(()=>{
-        this.$q.loading.hide();
-      })
-    }
-  }
+        ).finally(()=>{
+          $q.loading.hide();
+        });
+      }
+    };
+  },
+
 }
 </script>
 

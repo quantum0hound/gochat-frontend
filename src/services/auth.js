@@ -34,6 +34,12 @@ class AuthService{
     });
   }
 
+  signOut(){
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("username");
+    localStorage.setItem("loggedIn","false");
+  }
+
   applyTokenToHeaders(){
     let at = this.accessToken();
     if(this.signedIn() && at!==""){
@@ -60,6 +66,24 @@ class AuthService{
     }
   }
 
+  username(){
+    try{
+      return localStorage.getItem("username");
+    }
+    catch (err){
+      return "";
+    }
+  }
+
+  nameFormatRules(len){
+    if(!len || len<=0){
+      len = 1;
+    }
+    return [
+      val => (val && val.length > len) || `Password should have at least ${len} symbols length`,
+      val => (val.match(/^(?![_.])(?!.*[_.]{2})[a-zA-Z0-9._]+(?<![_.])$/)!=null) || "Incorrect format"
+    ]
+  }
 }
 
 

@@ -1,6 +1,5 @@
 import { useQuasar } from 'quasar';
 
-
 export function ShowDialog(quasarInstance, title, message) {
   quasarInstance.dialog({
     title: title,

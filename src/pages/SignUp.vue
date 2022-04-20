@@ -1,47 +1,60 @@
 <template>
-  <div class="row q-mt-md">
+  <div class="row q-pt-md" >
 
     <div class="col"></div>
     <div class="col-3">
-      <q-form @submit="onSubmit" >
-        <q-input
-          filled
-          v-model="username"
-          label="Username"
-          lazy-rules
-          :rules="[ val => val && val.length > 0 || 'Please type something']"
-        />
+      <q-card>
+        <q-card-section>
+          <div class="text-h6">Sign up</div>
+        </q-card-section>
+        <q-card-section>
+          <q-input
+            ref="usernameRef"
+            label="Username"
+            dense
+            v-model="username"
+            lazy-rules
+            :rules="usernameRules"
+          />
+        </q-card-section>
+        <q-card-section>
+          <q-input
+            ref="passwordRef"
+            type="password"
+            dense
+            v-model="password"
+            lazy-rules
+            :rules="passwordRules"
+            label="Password"
+          />
+        </q-card-section>
+        <q-card-section>
+          <q-input
+            ref="passwordConfirmRef"
+            type="password"
+            dense
+            v-model="passwordConfirm"
+            lazy-rules
+            :rules="passwordConfirmRules"
+            label="Confirm password"
+          />
+        </q-card-section>
+        <q-card-actions>
+          <q-btn label="Sign up"  color="primary" @click="signUp"/>
+        </q-card-actions>
+      </q-card>
 
-        <q-input
-          type="password"
-          filled
-          v-model="password"
-          label="Password"
-          :rules="[ val => val && val.length > 0 || 'Please type something']"
-        />
-
-        <q-input
-          type="password"
-          filled
-          v-model="passwordConfirm"
-          label="Password confirm"
-          :rules="[
-            val => val && val.length > 0 || 'Please type something',
-            val => val ===password  || 'Passwords don\'t match'
-          ]"
-        />
-
-        <div>
-          <q-btn label="Submit" type="submit" color="primary"/>
-        </div>
-      </q-form>
     </div>
     <div class="col"></div>
   </div>
 
 </template>
 
+
+
 <script>
+import {useQuasar} from "quasar";
+import {useRouter} from "vue-router";
 import {ref} from "vue";
 import AuthService from "src/services/auth"
 import {ShowDialog} from "src/utils/utils";
@@ -51,26 +64,70 @@ export default {
   name: "SignUp",
 
   setup(){
+    const $q = useQuasar();
+    const $r = useRouter();
+    const username = ref(null);
+    const usernameRef = ref(null);
+
+    const password = ref(null);
+    const passwordRef = ref(null);
+
+    const passwordConfirm = ref(null);
+    const passwordConfirmRef = ref(null);
+
     return {
-      username : ref(""),
-      password: ref(""),
-      passwordConfirm: ref("")
+      username,
+      usernameRef,
+      usernameRules:AuthService.nameFormatRules(5),
+
+      password,
+      passwordRef,
+      passwordRules:AuthService.nameFormatRules(5),
+
+      passwordConfirm,
+      passwordConfirmRef,
+      passwordConfirmRules:[
+        val => (val === password.value) || 'Passwords do not match',
+      ],
+
+      async signUp(){
+        usernameRef.value.validate();
+        passwordRef.value.validate();
+        if (
+          usernameRef.value.hasError ||
+          passwordRef.value.hasError ||
+          passwordConfirmRef.value.hasError
+        ) {
+          alert("validation failure");
+          return;
+        }
+
+        $q.loading.show({message: `Signing in...`});
+
+        AuthService.signUp(username.value,password.value).then(
+          response =>{
+            ShowDialog($q,"Success", `You were succesfully registered`);
+            $r.push("/signin");
+          },
+          error =>{
+            let errorMessage;
+            if(error.response && errorMessage.data && error.response.data.message){
+              errorMessage = error.response.data.message;
+            }
+            else if(error.message){
+              errorMessage = error.message;
+            }
+            else {
+              errorMessage = error;
+            }
+            ShowDialog($q,"Error", `Failed to create user : ${errorMessage}`);
+          }).finally(()=>{
+            $q.loading.hide();
+          });
+      }
     };
   },
-  methods:{
-    onSubmit(){
-      this.$q.loading.show({message: `Signing up...`});
-      AuthService.signUp(this.username,this.password)
-      .then(response =>{
-        this.$q.loading.hide();
-        ShowDialog(this.$q,"Success", `You were succesfully registered`);
-      })
-      .catch(error =>{
-        this.$q.loading.hide();
-        ShowDialog(this.$q,"Error", `Failed to create user : ${error.response.data.message}`);
-      });
-    }
-  }
+
 }
 </script>
 
