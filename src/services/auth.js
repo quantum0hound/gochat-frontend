@@ -1,19 +1,49 @@
 import axios from "axios";
 import {ApiUrl} from "src/config/config";
 import FingerprintJS from "@fingerprintjs/fingerprintjs";
+import {ShowDialog} from "src/utils/utils";
+import {handleAxiosErrors} from "src/services/axios_error_handler";
+
 
 class AuthService{
-  async signUp(username,password){
-    return axios
-    .post(
-      ApiUrl+"auth/signup",
-      {
-        username : username,
-        password : password
-      });
+
+  parseJwt (token) {
+    try{
+      let base64Url = token.split('.')[1];
+      let base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      let jsonPayload = decodeURIComponent(atob(base64)
+        .split('')
+        .map(function(c) {
+          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        })
+        .join(''));
+      return JSON.parse(jsonPayload);
+    }
+    catch (err){
+      console.error(`Failed to parse JWT token : ${err}`);
+      return null;
+    }
+
+  };
+
+  async signUp(username,password, onError){
+    try {
+      let res = await axios
+        .post(
+          ApiUrl + "auth/signup",
+          {
+            username: username,
+            password: password
+          });
+      return true;
+    }
+    catch (err){
+      handleAxiosErrors(err,onError);
+      return false;
+    }
   }
 
-  async signIn(username,password){
+  async signIn(username,password, onError){
     let fingerprint = null;
     try{
       let fp = await FingerprintJS.load();
@@ -21,22 +51,40 @@ class AuthService{
       fingerprint=result.visitorId;
     }
     catch (err){
-      console.log("Failed to get an fingerprint");
-      return;
+      onError("Failed to get an fingerprint");
+      return false;
     }
-
-    return axios.post(
-      ApiUrl+"auth/signin",
-      {
+    try{
+      let res = await axios.post(
+        ApiUrl+"auth/signin",
+        {
           username : username,
           password : password,
           fingerprint : fingerprint
-    });
+        });
+      if(!res.data || !res.data.accessToken){
+        onError("Incorrect response format, missing access token!");
+        return false;
+      }
+      let tokenData = this.parseJwt(res.data.accessToken);
+      if(!tokenData){
+        return false;
+      }
+
+      localStorage.setItem("accessToken",res.data.accessToken);
+      localStorage.setItem("username",tokenData.username);
+      localStorage.setItem("userId",tokenData.user_id);
+    }
+    catch (err){
+     handleAxiosErrors(err,onError);
+     return false;
+    }
+    return true;
   }
 
   signOut(){
     localStorage.removeItem("accessToken");
-    localStorage.removeItem("username");
+    localStorage.removeItem("userId");
     localStorage.setItem("loggedIn","false");
   }
 
@@ -50,7 +98,7 @@ class AuthService{
 
   signedIn(){
     try{
-      return localStorage.getItem("signedIn")!=="true";
+      return localStorage.getItem("username");
     }
     catch (err){
       return false;

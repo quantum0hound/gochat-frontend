@@ -37,6 +37,7 @@
             lazy-rules
             :rules="passwordConfirmRules"
             label="Confirm password"
+            @keypress.enter="signUp"
           />
         </q-card-section>
         <q-card-actions>
@@ -101,29 +102,19 @@ export default {
           alert("validation failure");
           return;
         }
+        let res = await AuthService.signUp(
+          username.value,
+          password.value,
+          (errMessage) =>{
+            ShowDialog($q,"Error", `Failed to create user : ${errMessage}`);
+          }
+        );
+        $q.loading.hide();
+        if(res===true){
+          ShowDialog($q,"Success", `You were succesfully registered`);
+          await $r.push("/signin");
+        }
 
-        $q.loading.show({message: `Signing in...`});
-
-        AuthService.signUp(username.value,password.value).then(
-          response =>{
-            ShowDialog($q,"Success", `You were succesfully registered`);
-            $r.push("/signin");
-          },
-          error =>{
-            let errorMessage;
-            if(error.response && errorMessage.data && error.response.data.message){
-              errorMessage = error.response.data.message;
-            }
-            else if(error.message){
-              errorMessage = error.message;
-            }
-            else {
-              errorMessage = error;
-            }
-            ShowDialog($q,"Error", `Failed to create user : ${errorMessage}`);
-          }).finally(()=>{
-            $q.loading.hide();
-          });
       }
     };
   },

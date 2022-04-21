@@ -26,6 +26,7 @@
             lazy-rules
             :rules="passwordRules"
             label="Password"
+            @keypress.enter="signIn"
           />
         </q-card-section>
         <q-card-actions>
@@ -79,38 +80,18 @@ export default {
         }
 
         $q.loading.show({message: `Signing in...`});
-
-        AuthService.signIn(username.value,password.value).then(
-          response =>{
-            console.log(response);
-            let accessToken = response.data.accessToken;
-
-            localStorage.setItem("accessToken",accessToken);
-            localStorage.setItem("username",username.value);
-            localStorage.setItem("loggedIn","true");
-
-            AuthService.applyTokenToHeaders();
-
-            $r.push("/");
-          },
-
-          error =>{
-            localStorage.setItem("accessToken","");
-            localStorage.setItem("username","");
-            localStorage.setItem("loggedIn","false");
-
-            let errorMessage;
-            if(error.response && error.response.data && error.response.data.message){
-              errorMessage = error.response.data.message;
-            }
-            else {
-              errorMessage = error;
-            }
-            ShowDialog($q,"Error", `Failed to sign in : ${errorMessage}`);
-          }
-        ).finally(()=>{
-          $q.loading.hide();
+        let res = await AuthService.signIn(
+          username.value,
+          password.value,
+          (errMessage) =>{
+            ShowDialog($q,"Error", `Failed to sign in : ${errMessage}`);
         });
+        $q.loading.hide();
+
+        if(res===true){
+          await $r.push("/");
+        }
+
       }
     };
   },

@@ -69,12 +69,22 @@ module.exports = configure(function (ctx) {
       // Options below are automatically set depending on the env, set them if you want to override
       // extractCSS: false,
 
-      // https://v2.quasar.dev/quasar-cli-webpack/handling-webpack
-      // "chain" is a webpack-chain object https://github.com/neutrinojs/webpack-chain
+      /*
+      zlib: require.resolve("browserify-zlib"),
+        assert: require.resolve("assert"),
+        util: require.resolve("util"),
+        os: require.resolve("os-browserify"),
+        path: require.resolve("path-browserify"),
+        buffer: require.resolve("buffer/"),
+       */
 
+      //url,https,http,crypto,tls,net,stream,zlib,os,path,fs
       chainWebpack (chain) {
         chain.plugin('eslint-webpack-plugin')
           .use(ESLintPlugin, [{ extensions: [ 'js', 'vue' ] }])
+
+          //chain.resolve.alias.set('zlib', path.resolve(__dirname, 'browserify-zlib'))
+
       }
 
     },

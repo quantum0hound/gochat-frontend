@@ -60,6 +60,11 @@
             </q-card-section>
             <q-card-section>
               <div>
+                <q-chat-message
+                  v-for="message in messages"
+                  :key="message.id"
+                  :text="[message.text]"
+                />
               </div>
             </q-card-section>
             <div class="message-div q-pa-xs" >
@@ -92,10 +97,12 @@
 <script>
 import {defineComponent, ref, onMounted} from 'vue'
 import AuthService from "src/services/auth"
+import WebSocketService from "src/services/websocket"
 import ChannelsService from "src/services/channel"
 import ChannelDialog from "components/ChannelDialog";
 import {useRouter} from "vue-router";
 import {useQuasar} from "quasar";
+import {ShowDialog} from "src/utils/utils";
 
 export default defineComponent({
   name: 'MainPage',
@@ -107,25 +114,22 @@ export default defineComponent({
     const selectedChannel = ref(null);
     const selectedChannelIdx = ref(0);
     const messageText = ref(null);
+    const messages = ref([]);
 
-    onMounted(()=>{
+    onMounted(async ()=>{
       if(!AuthService.signedIn()){
-        $r.push("signin");
+        await $r.push("/signin");
       }
       username.value = AuthService.username();
 
       AuthService.applyTokenToHeaders();
-      ChannelsService.getAll().then(
-        response =>{
-          channels.value = response.data.channels;
-          if(!selectedChannel.value && channels.value.length>0){
-            selectedChannel.value = channels.value[0];
-          }
-        },
-        error =>{
-          console.log(error);
-        }
-      );
+      channels.value = await ChannelsService.getAll(
+        (errMessage) =>{
+          ShowDialog($q,"Error", `Failed to get channels : ${errMessage}`);
+      });
+      if(channels.value && channels.value.length>0){
+        selectedChannel.value = channels.value[0];
+      }
     });
 
     return{
@@ -134,6 +138,7 @@ export default defineComponent({
       selectedChannelIdx,
       username,
       messageText,
+      messages,
       prompt: ref(false),
       address: ref(''),
 
@@ -152,8 +157,34 @@ export default defineComponent({
       },
       selectChannel(idx){
         selectedChannelIdx.value=idx;
-        console.log(channels.value[idx].name)
+        console.log(channels.value[idx].name);
+        WebSocketService.connectToChannel(
+          channels.value[idx].id,
+          (event)=>{
+            try{
+              let message = JSON.parse(event.data);
+              messages.value.push(message);
+            }
+            catch (err){
+              console.error(`Failed to parse websocket data: ${event.data}, ${err}`);
+            }
+          }
+        );
+        //WebSocketService.sendMessage("Hello");
       },
+
+      sendMessage(content){
+        // let message = {
+        //   content : content,
+        //   userId : AuthService.
+        // }
+          // id         serial    not null unique,
+          // content    text      not null,
+          // channel_id int references channels (id) on delete cascade not null,
+          // user_id    int references users (id) on delete cascade not null,
+          // posted     timestamp not null,
+          // modified   timestamp not null
+      }
 
     }
   },
