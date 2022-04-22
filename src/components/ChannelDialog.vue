@@ -34,7 +34,7 @@
 import {useDialogPluginComponent, useQuasar} from 'quasar'
 import {ref} from "vue";
 import AuthService from "src/services/auth";
-import ChannelService from "src/services/channel";
+import {createChannel} from "src/services/channel";
 import {ShowDialog} from "src/utils/utils";
 
 export default {
@@ -66,7 +66,7 @@ export default {
       dialogRef,
       onDialogHide,
 
-      onOKClick () {
+      async onOKClick () {
         nameRef.value.validate();
 
         if (nameRef.value.hasError) {
@@ -75,27 +75,15 @@ export default {
         }
 
         $q.loading.show({message: `Creating channel...`});
-        ChannelService.create(name.value, description.value).then(
-          response =>{
-            onDialogOK();
-          },
-
-          error =>{
-            let errorMessage;
-            if(error.response && error.response.data && error.response.data.message){
-              errorMessage = error.response.data.message;
-            }
-            else {
-              errorMessage = error;
-            }
-            ShowDialog($q,"Error", `Failed to sign in : ${errorMessage}`);
-          }
-        ).finally(()=>{
-          $q.loading.hide();
+        await createChannel(name.value,
+          description.value,
+          (errMessage) =>{
+            ShowDialog($q,"Error", `Failed to create channel : ${errMessage}`);
         });
+        $q.loading.hide();
+        onDialogOK();
 
       },
-
       onCancelClick: onDialogCancel
     }
   }

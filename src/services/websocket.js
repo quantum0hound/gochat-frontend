@@ -1,7 +1,11 @@
 import {WsUrl} from "src/config/config"
 export class WebsocketService{
-
+  sockets=[];
   connectToChannel(channelId, onMessageReceived) {
+    if(channelId<0)
+    if(this.sockets[channelId]){
+      return this.sockets[channelId];
+    }
     let ws = new WebSocket(`${WsUrl}api/channel/${channelId}/join`);
     ws.onopen = function() {
       console.log(`Connected to channel: ${channelId}`);
@@ -11,9 +15,9 @@ export class WebsocketService{
       if (event.wasClean) {
         console.log('Connection closed in a clean way');
       } else {
-        console.error('Connection rejected'); // например, "убит" процесс сервера
+        console.error('Connection rejected');
       }
-      console.log('Код: ' + event.code + ' причина: ' + event.reason);
+      console.log('Code: ' + event.code + ' reason: ' + event.reason);
     };
 
     ws.onmessage = onMessageReceived;
@@ -21,11 +25,11 @@ export class WebsocketService{
     ws.onerror = function(error) {
       console.error("Error " + error.message);
     };
-    this.ws = ws;
+    this.sockets[channelId] = ws;
   }
 
-  sendMessage(message){
-   this.ws.send(message);
+  sendMessage(channelId,message){
+   this.sockets[channelId].send(message);
   }
 }
 

@@ -56,7 +56,7 @@ class AuthService{
     }
     try{
       let res = await axios.post(
-        ApiUrl+"auth/signin",
+        "/api/auth/signin",
         {
           username : username,
           password : password,
@@ -123,6 +123,14 @@ class AuthService{
     }
   }
 
+  userId(){
+    try{
+      return localStorage.getItem("userId");
+    }
+    catch (err){
+      return "";
+    }
+  }
   nameFormatRules(len){
     if(!len || len<=0){
       len = 1;
