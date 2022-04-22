@@ -9,7 +9,7 @@
                 <MainMenu :username="username"/>
               </div>
               <div class="col-10">
-                <q-input dense></q-input>
+                <ChannelSearchInput/>
               </div>
             </div>
 
@@ -81,15 +81,15 @@ import {defineComponent, ref,toRefs, onMounted} from 'vue'
 import AuthService from "src/services/auth"
 import WebSocketService from "src/services/websocket"
 import {channelsInfo,getUserChannels} from "src/services/channel"
-import ChannelDialog from "components/ChannelDialog";
 import {useRouter} from "vue-router";
 import {useQuasar} from "quasar";
 import {ShowDialog} from "src/utils/utils";
 import MainMenu from "components/MainMenu";
+import ChannelSearchInput from "components/ChannelSearchInput";
 
 export default defineComponent({
   name: 'MainPage',
-  components: {MainMenu},
+  components: {ChannelSearchInput, MainMenu},
   setup(){
     const $r = useRouter();
     const $q = useQuasar();
@@ -116,6 +116,7 @@ export default defineComponent({
     });
 
     return{
+      channelSearchText : ref(""),
       channels,
       currentChannel,
       username,
@@ -123,8 +124,6 @@ export default defineComponent({
       messages,
       prompt: ref(false),
       address: ref(''),
-
-
 
       selectChannel(idx){
         console.log("selecting" + idx)

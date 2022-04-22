@@ -35,8 +35,22 @@ export async function getUserChannels(onError){
 }
 
 
-export async function createChannel(name,description,onError){
+export async function searchForChannels(pattern,onError){
+  try {
+    let res = await axios.post("api/api/channel/search",{"pattern":pattern});
+    if(!res.data && !res.data.channels){
+      onError("incorrect data is supplied instead of channels");
+      return null;
+    }
+    return res.data.channels;
+  }
+  catch (err){
+    handleAxiosErrors(err,onError);
+    return null;
+  }
+}
 
+export async function createChannel(name,description,onError){
   try {
     let channel = {
       name:name,
