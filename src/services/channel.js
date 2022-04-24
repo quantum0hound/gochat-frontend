@@ -38,11 +38,20 @@ export async function getUserChannels(onError){
 export async function searchForChannels(pattern,onError){
   try {
     let res = await axios.post("api/api/channel/search",{"pattern":pattern});
-    if(!res.data && !res.data.channels){
+    if(!res.data || !res.data.channels){
       onError("incorrect data is supplied instead of channels");
       return null;
     }
-    return res.data.channels;
+    let channelNames = [];
+
+    res.data.channels.forEach(function(val){
+      channelNames.push({
+        value: val.name,
+        label: val.name,
+        id : val.id
+      });
+    });
+    return channelNames;
   }
   catch (err){
     handleAxiosErrors(err,onError);
@@ -62,6 +71,24 @@ export async function createChannel(name,description,onError){
       return false;
     }
     channel.id = res.data.id;
+    channelsInfo.channels.set(channel.id, channel);
+    return true;
+  }
+  catch (err){
+    handleAxiosErrors(err,onError);
+    return false;
+  }
+}
+
+export async function joinChannel(channelId,onError){
+  try {
+
+    let res = await axios.get(`/api/api/channel/${channelId}/join`);
+    if(!res.data || !res.data.channel){
+      onError("incorrect data is supplied for channel");
+      return false;
+    }
+    let channel = res.data.channel;
     channelsInfo.channels.set(channel.id, channel);
     return true;
   }

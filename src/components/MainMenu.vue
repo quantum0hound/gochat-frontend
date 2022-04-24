@@ -18,6 +18,7 @@
             <q-item-section avatar> <q-icon name="logout"></q-icon></q-item-section>
             <q-item-section>Sign out</q-item-section>
           </q-item>
+
         </q-list>
       </q-menu>
     </q-btn>

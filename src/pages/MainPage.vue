@@ -9,7 +9,7 @@
                 <MainMenu :username="username"/>
               </div>
               <div class="col-10">
-                <ChannelSearchInput/>
+
               </div>
             </div>
 
@@ -30,6 +30,9 @@
                 </q-item>
               </q-list>
             </q-card-section>
+            <q-card-actions>
+              <ChannelSearchInput/>
+            </q-card-actions>
           </q-card>
 
 
