@@ -17,8 +17,9 @@ export async function getUserChannels(onError){
       return false;
     }
     let channels = res.data.channels;
-
+    channelsInfo.channels.clear();
     if(channels.length>0){
+
       channels.forEach(function (item){
         channelsInfo.channels.set(item.id,item);
       });
@@ -66,11 +67,11 @@ export async function createChannel(name,description,onError){
       description:description
     }
     let res = await axios.post(ApiUrl+"api/channel",channel);
-    if(!res.data && !res.data.id){
-      onError("incorrect data is supplied channel id");
+    if(!res.data || !res.data.channel){
+      onError("incorrect data is supplied instead of channel info");
       return false;
     }
-    channel.id = res.data.id;
+    channel = res.data.channel;
     channelsInfo.channels.set(channel.id, channel);
     return true;
   }
@@ -90,6 +91,43 @@ export async function joinChannel(channelId,onError){
     }
     let channel = res.data.channel;
     channelsInfo.channels.set(channel.id, channel);
+    return true;
+  }
+  catch (err){
+    handleAxiosErrors(err,onError);
+    return false;
+  }
+}
+
+export async function leaveChannel(channelId,onError){
+  try {
+    let res = await axios.get(`/api/api/channel/${channelId}/leave`);
+    if(!res.data || res.data.status!=="ok"){
+      return false;
+    }
+    if(channelsInfo.currentChannel && channelsInfo.currentChannel.id===channelId && channelsInfo.channels){
+      channelsInfo.currentChannel=null;
+    }
+    channelsInfo.channels.delete(channelId);
+
+    return true;
+  }
+  catch (err){
+    handleAxiosErrors(err,onError);
+    return false;
+  }
+}
+
+export async function deleteChannel(channelId,onError){
+  try {
+    let res = await axios.delete(`/api/api/channel/${channelId}`);
+    if(!res.data || res.data.status!=="ok"){
+      return false;
+    }
+    if(channelsInfo.currentChannel && channelsInfo.currentChannel.id===channelId){
+      channelsInfo.currentChannel=null;
+    }
+    channelsInfo.channels.delete(channelId);
     return true;
   }
   catch (err){

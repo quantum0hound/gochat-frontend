@@ -7,6 +7,7 @@
       </q-card-section>
       <q-card-section>
         <q-input
+          autofocus
           ref="nameRef"
           dense
           v-model="name"

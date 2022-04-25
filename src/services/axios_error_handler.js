@@ -10,7 +10,13 @@ export function handleAxiosErrors(err, handler){
 
   }
   else if(err.request){
-    errMessage = err.request;
+    if(err.request.responseText){
+      errMessage = err.request.responseText;
+    }
+    else{
+      errMessage = "server is unavailable";
+    }
+
   }
   else{
     errMessage =err;

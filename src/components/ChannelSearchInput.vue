@@ -1,6 +1,5 @@
 <template>
 <!--  <q-input dense v-model="pattern" @keyup="search(pattern)"></q-input>-->
-
   <q-select
     v-model="model"
     dense
@@ -9,10 +8,15 @@
     fill-input
     input-debounce="0"
     :options="channels"
+    label="Type channel name"
     @filter="filterFn"
     @update:model-value="join(model.id)"
   >
+    <template v-slot:prepend>
+      <q-icon name="search" />
+    </template>
     <template v-slot:no-option>
+
       <q-item>
         <q-item-section class="text-grey">
           No results
@@ -34,9 +38,10 @@ name: "ChannelSearchInput",
   setup(){
   const $q = useQuasar();
     const channels = ref(null);
+    const model = ref(null);
     return {
       channels,
-      model: ref(null),
+      model,
       pattern : ref(""),
 
       async join(id){
@@ -46,6 +51,7 @@ name: "ChannelSearchInput",
             ShowDialog($q,"Error",`Failed to join channel: ` + errMessage)
           }
         );
+        model.value="";
 
       },
 

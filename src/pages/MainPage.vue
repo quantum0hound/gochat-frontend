@@ -30,8 +30,8 @@
                 </q-item>
               </q-list>
             </q-card-section>
-            <q-card-actions>
-              <ChannelSearchInput/>
+            <q-card-actions class="align-bottom" >
+              <ChannelSearchInput style="width: 100%"/>
             </q-card-actions>
           </q-card>
 
@@ -52,9 +52,15 @@
                 />
               </div>
             </q-card-section>
-            <div class="message-div q-pa-xs" >
+            <div class="align-bottom q-pa-xs" >
 
-              <q-input dense outlined v-model="messageText" @keypress.enter="sendMessage(messageText)">
+              <q-input
+                autofocus
+                dense
+                outlined
+                v-model="messageText"
+                @keypress.enter="sendMessage(messageText)"
+              >
                 <template v-slot:after>
                   <q-btn round dense flat icon="send"  @click="sendMessage(messageText)"/>
                 </template>
@@ -63,16 +69,8 @@
           </q-card>
       </div>
       <div class="col-3 q-pa-xs">
-
-          <q-card class="height-100">
-            <q-card-section>
-              Channel details:
-            </q-card-section>
-            <q-card-section>
-
-            </q-card-section>
-          </q-card>
-        </div>
+        <ChannelDetails/>
+      </div>
     </div>
 
 
@@ -89,10 +87,11 @@ import {useQuasar} from "quasar";
 import {ShowDialog} from "src/utils/utils";
 import MainMenu from "components/MainMenu";
 import ChannelSearchInput from "components/ChannelSearchInput";
+import ChannelDetails from "components/ChannelDetails";
 
 export default defineComponent({
   name: 'MainPage',
-  components: {ChannelSearchInput, MainMenu},
+  components: {ChannelDetails, ChannelSearchInput, MainMenu},
   setup(){
     const $r = useRouter();
     const $q = useQuasar();
@@ -115,6 +114,7 @@ export default defineComponent({
           ShowDialog($q,"Error", `Failed to get channels : ${errMessage}`);
         }
       )
+      console.log(channels.value);
 
     });
 
@@ -165,17 +165,6 @@ export default defineComponent({
 .active-channel{
   color: white;
   background: #156ede;
-}
-
-.message-div {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-}
-
-.height-100{
-  height: 95vh;
 }
 
 </style>

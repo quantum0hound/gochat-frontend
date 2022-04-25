@@ -9,6 +9,7 @@
         </q-card-section>
         <q-card-section>
           <q-input
+            autofocus
             ref="usernameRef"
             label="Username"
             dense

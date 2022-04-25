@@ -30,7 +30,7 @@ class AuthService{
     try {
       let res = await axios
         .post(
-          ApiUrl + "auth/signup",
+          "api/auth/signup",
           {
             username: username,
             password: password
@@ -84,8 +84,8 @@ class AuthService{
 
   signOut(){
     localStorage.removeItem("accessToken");
+    localStorage.removeItem("username");
     localStorage.removeItem("userId");
-    localStorage.setItem("loggedIn","false");
   }
 
   applyTokenToHeaders(){
@@ -125,10 +125,10 @@ class AuthService{
 
   userId(){
     try{
-      return localStorage.getItem("userId");
+      return Number(localStorage.getItem("userId"));
     }
     catch (err){
-      return "";
+      return 0;
     }
   }
   nameFormatRules(len){
