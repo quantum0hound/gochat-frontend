@@ -114,7 +114,6 @@ export default defineComponent({
           ShowDialog($q,"Error", `Failed to get channels : ${errMessage}`);
         }
       )
-      console.log(channels.value);
 
     });
 

@@ -1,7 +1,5 @@
 import axios from "axios";
-import {ApiUrl} from "src/config/config";
 import FingerprintJS from "@fingerprintjs/fingerprintjs";
-import {ShowDialog} from "src/utils/utils";
 import {handleAxiosErrors} from "src/services/axios_error_handler";
 
 
