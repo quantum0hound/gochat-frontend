@@ -16,6 +16,7 @@
     "@vuelidate/core": "^2.0.0-alpha.40",
     "@vuelidate/validators": "^2.0.0-alpha.28",
     "axios": "^0.26.1",
+    "axios-retry": "^3.2.4",
     "core-js": "^3.6.5",
     "fingerprintjs2-modular": "^3.1.0",
     "jwt-decode": "^3.1.2",

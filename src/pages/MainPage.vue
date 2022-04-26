@@ -6,7 +6,7 @@
           <q-card  class="height-100">
             <div class="row q-pa-sm">
               <div class="col">
-                <MainMenu :username="username"/>
+                <MainMenu/>
               </div>
               <div class="col-10">
 
@@ -102,14 +102,19 @@ export default defineComponent({
     const {currentChannel, channels} =toRefs(channelsInfo);
 
     onMounted(async ()=>{
-      if(!AuthService.signedIn()){
-        await $r.push("/signin");
-      }
-      username.value = AuthService.username();
+      // if(!AuthService.signedIn()){
+      //   await AuthService.refresh((errMessage) =>{
+      //     ShowDialog($q,"Error", `Failed to get channels : ${errMessage}`);
+      //   });
+      //   await $r.push("/signin");
+      //   return;
+      // }
+      username.value = AuthService.username;
+      //
+      // AuthService.applyTokenToHeaders();
 
-      AuthService.applyTokenToHeaders();
 
-      let res = await getUserChannels(
+      await getUserChannels(
         (errMessage) =>{
           ShowDialog($q,"Error", `Failed to get channels : ${errMessage}`);
         }
@@ -150,7 +155,7 @@ export default defineComponent({
       sendMessage(content){
         let message = {
           content : content,
-          userId : AuthService.userId()
+          userId : AuthService.userId
         }
         WebSocketService.sendMessage(JSON.stringify(message));
       }

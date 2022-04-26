@@ -1,32 +1,18 @@
 import axios from "axios";
 import FingerprintJS from "@fingerprintjs/fingerprintjs";
 import {handleAxiosErrors} from "src/services/axios_error_handler";
-
+import {ref} from "vue"
 
 class AuthService{
 
-  parseJwt (token) {
-    try{
-      let base64Url = token.split('.')[1];
-      let base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-      let jsonPayload = decodeURIComponent(atob(base64)
-        .split('')
-        .map(function(c) {
-          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-        })
-        .join(''));
-      return JSON.parse(jsonPayload);
-    }
-    catch (err){
-      console.error(`Failed to parse JWT token : ${err}`);
-      return null;
-    }
-
-  };
+  accessToken="";
+  username= ref("");
+  userId=0;
+  expiresAt=0;
 
   async signUp(username,password, onError){
     try {
-      let res = await axios
+      await axios
         .post(
           "api/auth/signup",
           {
@@ -64,14 +50,12 @@ class AuthService{
         onError("Incorrect response format, missing access token!");
         return false;
       }
-      let tokenData = this.parseJwt(res.data.accessToken);
-      if(!tokenData){
+      if(!this.processJWT(res.data.accessToken)){
+        onError("Unable to process access token!");
         return false;
       }
+      this.applyTokenToHeaders();
 
-      localStorage.setItem("accessToken",res.data.accessToken);
-      localStorage.setItem("username",tokenData.username);
-      localStorage.setItem("userId",tokenData.user_id);
     }
     catch (err){
      handleAxiosErrors(err,onError);
@@ -81,13 +65,49 @@ class AuthService{
   }
 
   signOut(){
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("username");
-    localStorage.removeItem("userId");
+    this.accessToken="";
+    this.userId=0;
+    this.username.value="";
+    this.expiresAt=0;
+  }
+
+  async refresh(onError){
+    let fingerprint = null;
+    try{
+      let fp = await FingerprintJS.load();
+      let result = await fp.get();
+      fingerprint=result.visitorId;
+    }
+    catch (err){
+      onError("Failed to get an fingerprint");
+      return false;
+    }
+    try{
+      let res = await axios.post(
+        "/api/auth/refresh",
+        {
+          fingerprint : fingerprint
+        });
+      if(!res.data || !res.data.accessToken){
+        onError("Incorrect response format, missing access token!");
+        return false;
+      }
+      if(!this.processJWT(res.data.accessToken)){
+        onError("Unable to process access token!");
+        return false;
+      }
+      this.applyTokenToHeaders();
+
+    }
+    catch (err){
+      handleAxiosErrors(err,onError);
+      return false;
+    }
+    return true;
   }
 
   applyTokenToHeaders(){
-    let at = this.accessToken();
+    let at = this.accessToken;
     if(this.signedIn() && at!==""){
       axios.defaults.headers.common['Authorization'] = `Bearer ${at}`;
     }
@@ -96,39 +116,41 @@ class AuthService{
 
   signedIn(){
     try{
-      return localStorage.getItem("username");
+      return this.accessToken!=="";
     }
     catch (err){
       return false;
     }
   }
 
-  accessToken(){
+  processJWT(accessToken){
     try{
-      return localStorage.getItem("accessToken");
+      let base64Url = accessToken.split('.')[1];
+      let base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      let jsonPayload = decodeURIComponent(atob(base64)
+        .split('')
+        .map(function(c) {
+          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        })
+        .join(''));
+      let tokenData = JSON.parse(jsonPayload);
+      if(!tokenData){
+        return false;
+      }
+
+      this.accessToken=accessToken;
+      this.userId=tokenData.user_id;
+      this.username.value=tokenData.username;
+      this.expiresAt=tokenData.exp;
+      return true;
     }
     catch (err){
-      return "";
+      console.error(`Failed to parse JWT token : ${err}`);
+      return false;
     }
+
   }
 
-  username(){
-    try{
-      return localStorage.getItem("username");
-    }
-    catch (err){
-      return "";
-    }
-  }
-
-  userId(){
-    try{
-      return Number(localStorage.getItem("userId"));
-    }
-    catch (err){
-      return 0;
-    }
-  }
   nameFormatRules(len){
     if(!len || len<=0){
       len = 1;

@@ -34,15 +34,17 @@ import AuthService from "src/services/auth";
 
 export default {
   name: "MainMenu",
-  props:{
-    username : String
-  },
+  // props:{
+  //   username : String
+  // },
   setup(){
 
     const $q = useQuasar();
     const $r = useRouter();
+    const username = AuthService.username;
 
     return{
+      username,
       addChannel(){
         $q.dialog({
           component : ChannelDialog,

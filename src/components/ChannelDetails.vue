@@ -28,7 +28,7 @@ export default {
     const {currentChannel, channels} =toRefs(channelsInfo);
     const $q = useQuasar();
     const showDeleteButton = computed(()=>{
-      return (currentChannel && (currentChannel.value.creator === AuthService.userId()));
+      return (currentChannel && (currentChannel.value.creator === AuthService.userId));
     });
 
     return{
