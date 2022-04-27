@@ -1,13 +1,14 @@
 import { boot } from 'quasar/wrappers'
 import axios from "axios";
 import AuthService from "src/services/auth"
+import {nowTs} from "src/utils/utils"
 
 
-export default boot( (/* { app, router, ... } */) => {
+
+export default boot( ({router}) => {
   axios.interceptors.request.use( async config =>{
-    if(AuthService.expiresAt!==0){
-      let now = Date.now() / 1000 | 0;
-      if(AuthService.expiresAt < now){
+    if(AuthService.expiresAt!==0 && config.url!=="/api/auth/refresh"){
+      if(AuthService.expiresAt < nowTs()){
         console.log("refreshing access token");
         await AuthService.refresh(errMessage=>{
           console.log(errMessage);
@@ -26,7 +27,10 @@ export default boot( (/* { app, router, ... } */) => {
       }
       return AuthService.refresh(errMessage=>{
         console.log(errMessage);
-      }).then( () =>{
+      }).then( async () =>{
+        if(!AuthService.signedIn()){
+          await router.push("/signin");
+        }
         error.config.headers['Authorization'] = 'Bearer ' + AuthService.accessToken;
         error.config.baseURL = undefined;
         return axios.request(error.config)

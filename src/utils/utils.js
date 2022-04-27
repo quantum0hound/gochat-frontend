@@ -1,4 +1,7 @@
 import { useQuasar } from 'quasar';
+export function nowTs(){
+  return Date.now() / 1000 | 0;
+}
 
 export function ShowDialog(quasarInstance, title, message) {
   quasarInstance.dialog({

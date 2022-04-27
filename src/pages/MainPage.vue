@@ -89,6 +89,7 @@ import MainMenu from "components/MainMenu";
 import ChannelSearchInput from "components/ChannelSearchInput";
 import ChannelDetails from "components/ChannelDetails";
 
+
 export default defineComponent({
   name: 'MainPage',
   components: {ChannelDetails, ChannelSearchInput, MainMenu},
@@ -100,19 +101,13 @@ export default defineComponent({
     const messages = ref([]);
 
     const {currentChannel, channels} =toRefs(channelsInfo);
-
     onMounted(async ()=>{
-      // if(!AuthService.signedIn()){
-      //   await AuthService.refresh((errMessage) =>{
-      //     ShowDialog($q,"Error", `Failed to get channels : ${errMessage}`);
-      //   });
-      //   await $r.push("/signin");
-      //   return;
-      // }
-      username.value = AuthService.username;
-      //
-      // AuthService.applyTokenToHeaders();
+      await AuthService.refresh(errMessage=>{
+        console.log(errMessage);
+      });
 
+      WebSocketService.connect()
+      username.value = AuthService.username;
 
       await getUserChannels(
         (errMessage) =>{
